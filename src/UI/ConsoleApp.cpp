@@ -55,6 +55,8 @@ void ConsoleApp::loadAllData() {
     custRepo.loadCustomers("data/customers.txt");
     custRepo.loadBlacklists("data/blacklist.txt");
     custRepo.loadReviews("data/reviews.txt");
+    custRepo.loadDiscounts("data/discounts.txt");
+    custRepo.ensureDefaultDiscounts();
 
     fieldRepo.loadFields("data/fields.txt");
     fieldRepo.loadTimeSlots("data/timeslots.txt");
@@ -96,6 +98,7 @@ void ConsoleApp::saveAllData() {
     custRepo.saveCustomers("data/customers.txt");
     custRepo.saveBlacklists("data/blacklist.txt");
     custRepo.saveReviews("data/reviews.txt");
+    custRepo.saveDiscounts("data/discounts.txt");
 
     fieldRepo.saveFields("data/fields.txt");
     fieldRepo.saveTimeSlots("data/timeslots.txt");
@@ -326,6 +329,13 @@ void ConsoleApp::ownerManageTournaments() {
             } else {
                 std::cout << " (Chua cap nhat ti so)\n";
             }
+        }
+
+        TournamentResult res("", "", "", 0);
+        if (tourService.calculateTournamentResult(t.getTournamentId(), res)) {
+            std::cout << "    => [KET QUA] Vo dich: " << res.getChampionTeamId()
+                      << " | A quan: " << res.getRunnerUpTeamId()
+                      << " (Da dau: " << res.getTotalMatchesPlayed() << " tran)\n";
         }
     }
 
@@ -639,6 +649,13 @@ void ConsoleApp::customerTournamentMenu() {
                   << " | Ngay: " << t.getStartDate()
                   << " | So doi: " << tTeams.size() << "/" << t.getMaxTeams()
                   << " | Trang thai: " << t.getStatus() << "\n";
+
+        TournamentResult res("", "", "", 0);
+        if (tourService.calculateTournamentResult(t.getTournamentId(), res)) {
+            std::cout << "    => [KET QUA] Vo dich: " << res.getChampionTeamId()
+                      << " | A quan: " << res.getRunnerUpTeamId()
+                      << " (Da dau: " << res.getTotalMatchesPlayed() << " tran)\n";
+        }
     }
 
     std::cout << "\n 1. Gui yeu cau To chuc Giai dau moi\n";

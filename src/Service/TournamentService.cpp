@@ -134,12 +134,87 @@ bool TournamentService::approveAndScheduleTournament(const std::string& tourId) 
     return true;
 }
 
+bool TournamentService::rejectTournament(const std::string& tourId) {
+    Tournament* t = tourRepo.findTournamentById(tourId);
+    if (!t || t->getStatus() != "PENDING") {
+        std::cerr << "  [-] Giai dau khong ton tai hoac khong o trang thai PENDING!\n";
+        return false;
+    }
+    t->setStatus("REJECTED");
+    std::cout << "  [+] Da tu choi giai dau " << t->getName() << " (Trang thai: REJECTED).\n";
+    return true;
+}
+
 bool TournamentService::recordMatchScore(const std::string& matchId, int scoreA, int scoreB) {
+    if (scoreA < 0 || scoreB < 0) {
+        std::cerr << "  [-] Ti so tran dau phai >= 0!\n";
+        return false;
+    }
     TournamentMatch* m = tourRepo.findMatchById(matchId);
     if (!m) return false;
 
     m->setResult(scoreA, scoreB);
     std::cout << "  [+] Cap nhat ti so tran " << matchId << ": "
               << m->getTeamAId() << " (" << scoreA << " - " << scoreB << ") " << m->getTeamBId() << "\n";
+
+    // Kiểm tra nếu toàn bộ trận đấu của giải đã hoàn tất -> Chuyển giải sang COMPLETED
+    std::string tourId = m->getTournamentId();
+    LinkedList<TournamentMatch> allMatches = tourRepo.getMatchesByTournament(tourId);
+    bool allDone = !allMatches.empty();
+    for (const auto& item : allMatches) {
+        if (!item.isCompleted()) {
+            allDone = false;
+            break;
+        }
+    }
+    if (allDone) {
+        Tournament* t = tourRepo.findTournamentById(tourId);
+        if (t) {
+            t->setStatus("COMPLETED");
+            std::cout << "  [*] Tat ca tran dau da hoan tat! Giai dau " << t->getName()
+                      << " chuyen sang trang thai COMPLETED.\n";
+        }
+    }
+    return true;
+}
+
+bool TournamentService::calculateTournamentResult(const std::string& tourId, TournamentResult& outResult) const {
+    LinkedList<Team> teams = tourRepo.getTeamsByTournament(tourId);
+    LinkedList<TournamentMatch> matches = tourRepo.getMatchesByTournament(tourId);
+    if (teams.size() < 2 || matches.empty()) return false;
+
+    std::string champId = "N/A", runnerUpId = "N/A";
+    int maxPts = -1, secondPts = -1;
+    int playedCount = 0;
+
+    for (const auto& m : matches) {
+        if (m.isCompleted()) playedCount++;
+    }
+    if (playedCount == 0) return false;
+
+    for (const auto& tm : teams) {
+        int pts = 0;
+        for (const auto& m : matches) {
+            if (!m.isCompleted()) continue;
+            if (m.getTeamAId() == tm.getTeamId()) {
+                if (m.getScoreA() > m.getScoreB()) pts += 3;
+                else if (m.getScoreA() == m.getScoreB()) pts += 1;
+            } else if (m.getTeamBId() == tm.getTeamId()) {
+                if (m.getScoreB() > m.getScoreA()) pts += 3;
+                else if (m.getScoreB() == m.getScoreA()) pts += 1;
+            }
+        }
+        if (pts > maxPts) {
+            secondPts = maxPts;
+            runnerUpId = champId;
+            maxPts = pts;
+            champId = tm.getTeamId() + " (" + tm.getTeamName() + " - " + std::to_string(pts) + "d)";
+        } else if (pts > secondPts) {
+            secondPts = pts;
+            runnerUpId = tm.getTeamId() + " (" + tm.getTeamName() + " - " + std::to_string(pts) + "d)";
+        }
+    }
+
+    outResult = TournamentResult(tourId, champId, runnerUpId, playedCount);
     return true;
 }

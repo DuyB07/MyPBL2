@@ -157,3 +157,47 @@ void CustomerRepository::deactivateBlacklist(const std::string& customerId) {
         }
     }
 }
+
+bool CustomerRepository::loadDiscounts(const std::string& path) {
+    discounts.clear();
+    LinkedList<std::string> lines;
+    std::string error;
+    if (!Storage::FileManager::readAllLines(path, lines, error)) return false;
+
+    for (const auto& line : lines) {
+        LinkedList<std::string> tokens = Storage::FileManager::split(line, '|');
+        if (tokens.size() >= 6) {
+            auto it = tokens.begin();
+            std::string dId = *it; ++it;
+            std::string name = *it; ++it;
+            int minB = 0, pct = 0;
+            try {
+                minB = std::stoi(*it); ++it;
+                pct = std::stoi(*it); ++it;
+            } catch (...) {}
+            std::string desc = *it; ++it;
+            bool act = true;
+            try { act = (std::stoi(*it) != 0); } catch (...) {}
+            discounts.pushBack(Discount(dId, name, minB, pct, desc, act));
+        }
+    }
+    return true;
+}
+
+bool CustomerRepository::saveDiscounts(const std::string& path) const {
+    LinkedList<std::string> lines;
+    for (const auto& d : discounts) {
+        lines.pushBack(d.serialize());
+    }
+    std::string error;
+    return Storage::FileManager::writeAllLines(path, lines, error);
+}
+
+void CustomerRepository::ensureDefaultDiscounts() {
+    if (discounts.empty()) {
+        discounts.pushBack(Discount("DC01", "Hang Dong", 3, 5, "Giam 5% khi dat tu 3 lan", true));
+        discounts.pushBack(Discount("DC02", "Hang Bac", 5, 10, "Giam 10% khi dat tu 5 lan", true));
+        discounts.pushBack(Discount("DC03", "Hang Vang", 10, 15, "Giam 15% khi dat tu 10 lan", true));
+        saveDiscounts("data/discounts.txt");
+    }
+}

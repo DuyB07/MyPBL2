@@ -31,6 +31,12 @@ public:
     // Chủ sân duyệt giải và tự động xếp lịch thi đấu bằng Queue<TournamentMatch> (FIFO)
     bool approveAndScheduleTournament(const std::string& tourId);
 
-    // Cập nhật tỉ số trận đấu
+    // Chủ sân từ chối yêu cầu tạo giải đấu
+    bool rejectTournament(const std::string& tourId);
+
+    // Cập nhật tỉ số trận đấu (tự động chuyển giải sang COMPLETED nếu đã đấu hết các trận)
     bool recordMatchScore(const std::string& matchId, int scoreA, int scoreB);
+
+    // Tính toán kết quả Vô địch & Á quân bằng lớp TournamentResult
+    bool calculateTournamentResult(const std::string& tourId, TournamentResult& outResult) const;
 };

@@ -20,7 +20,11 @@ bool BookingService::createBooking(const std::string& bookingId, const std::stri
         std::cerr << "  [-] Ngay dat san khong hop le!\n";
         return false;
     }
-
+    if (DateTime::isPastDate(date)) {
+        std::cerr << "  [-] Khong the dat san vao ngay trong qua khu (" << date << " < " << DateTime::todayDate() << ")!\n";
+        return false;
+    }
+    
     // 3. Tách fieldId từ slotId (VD: "F01_S1" -> "F01") và kiểm tra Sân + Khung giờ tồn tại thực sự
     std::size_t underscorePos = slotId.find('_');
     if (underscorePos == std::string::npos) {

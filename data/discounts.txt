@@ -1,0 +1,3 @@
+DC01|Hang Dong|3|5|Giam 5% khi dat tu 3 lan|1
+DC02|Hang Bac|5|10|Giam 10% khi dat tu 5 lan|1
+DC03|Hang Vang|10|15|Giam 15% khi dat tu 10 lan|1

@@ -5,6 +5,7 @@
 #include "Account/Customer.h"
 #include "Customer/Blacklist.h"
 #include "Customer/Review.h"
+#include "Customer/Discount.h"
 #include "Storage/FileManager.h"
 
 class CustomerRepository {
@@ -14,6 +15,7 @@ private:
     HashTable<std::string, std::string> usernameToIdMap; // Key: Username, Value: CustomerID
     LinkedList<Blacklist> blacklists;
     LinkedList<Review> reviews;
+    LinkedList<Discount> discounts;
 
 public:
     CustomerRepository() = default;
@@ -39,4 +41,10 @@ public:
     bool saveReviews(const std::string& path = "data/reviews.txt") const;
     void addReview(const Review& rv);
     const LinkedList<Review>& getAllReviews() const { return reviews; }
+
+    // --- Quản lý Discount (Bảng chính sách ưu đãi) ---
+    bool loadDiscounts(const std::string& path = "data/discounts.txt");
+    bool saveDiscounts(const std::string& path = "data/discounts.txt") const;
+    void ensureDefaultDiscounts();
+    const LinkedList<Discount>& getAllDiscounts() const { return discounts; }
 };

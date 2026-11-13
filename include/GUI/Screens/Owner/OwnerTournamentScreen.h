@@ -16,6 +16,6 @@ private:
 
 public:
     explicit OwnerTournamentScreen(AppContext& context);
-    const char* getMenuLabel() const override { return "5. Quan ly Giai dau"; }
+    const char* getMenuLabel() const override { return "5. Quản lý Giải đấu"; }
     void render() override;
 };

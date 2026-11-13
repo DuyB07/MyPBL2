@@ -11,6 +11,6 @@ private:
 
 public:
     explicit OwnerBookingScreen(AppContext& context);
-    const char* getMenuLabel() const override { return "3. Phieu dat san & Hoa don"; }
+    const char* getMenuLabel() const override { return "3. Phiếu đặt sân & Hóa đơn"; }
     void render() override;
 };

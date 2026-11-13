@@ -15,6 +15,6 @@ private:
 
 public:
     explicit OwnerCustomerScreen(AppContext& context);
-    const char* getMenuLabel() const override { return "4. Danh ba Khach hang"; }
+    const char* getMenuLabel() const override { return "4. Danh bạ Khách hàng"; }
     void render() override;
 };

@@ -29,6 +29,6 @@ private:
 
 public:
     explicit OwnerFieldScreen(AppContext& context);
-    const char* getMenuLabel() const override { return "2. Quan ly San bong"; }
+    const char* getMenuLabel() const override { return "2. Quản lý Sân bóng"; }
     void render() override;
 };

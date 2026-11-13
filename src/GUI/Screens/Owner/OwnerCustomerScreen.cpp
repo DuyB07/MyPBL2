@@ -10,37 +10,36 @@ OwnerCustomerScreen::OwnerCustomerScreen(AppContext& context)
 }
 
 void OwnerCustomerScreen::render() {
-    if (UI::PageHeader("QUAN LY KHACH HANG & BLACKLIST",
-                       "Tra cuu danh ba tuc thi O(1) bang HashTable va kiem soat khach vi pham huy san",
-                       "Xem Lich su Blacklist")) {
+    if (UI::PageHeader("QUẢN LÝ KHÁCH HÀNG & DANH SÁCH ĐEN (BLACKLIST)",
+                       "Tra cứu danh bạ tức thì O(1) bằng HashTable và kiểm soát khách vi phạm hủy sân",
+                       "Xem Lịch sử Blacklist")) {
         openBlacklistModal = true;
     }
 
-    UI::BeginSectionCard("CustomerDirCard", "DANH BA KHACH HANG THANH VIEN");
+    UI::BeginSectionCard("CustomerDirCard", "DANH BẠ KHÁCH HÀNG THÀNH VIÊN");
 
-    // Thanh tra cứu HashTable O(1) căn thẳng hàng Baseline
     ImGui::AlignTextToFramePadding();
-    ImGui::Text("Tra cuu nhanh theo SDT (HashTable O(1)):");
+    ImGui::Text("Tra cứu nhanh theo SĐT (HashTable O(1)):");
     ImGui::SameLine();
     ImGui::SetNextItemWidth(220.0f);
     bool enterSearch = ImGui::InputText("##ph_search", phoneSearchBuf, sizeof(phoneSearchBuf), ImGuiInputTextFlags_EnterReturnsTrue);
     ImGui::SameLine();
-    if (UI::PrimaryButton("Tim kiem O(1)", ImVec2(130.0f, 0.0f)) || enterSearch) {
+    if (UI::PrimaryButton("Tìm kiếm O(1)", ImVec2(130.0f, 0.0f)) || enterSearch) {
         std::string ph = AppContext::sanitize(phoneSearchBuf);
         Customer* found = ctx.custService.getCustomerByPhone(ph);
         if (found) {
             foundSuccess = true;
-            foundCustomerBanner = "KET QUA O(1): [" + found->getUserID() + "] " + found->getFullName() +
-                                  " | Username: " + found->getUsername() +
-                                  " | Da dat: " + std::to_string(found->getBookingCount()) + " lan" +
-                                  " | Uu dai: " + std::to_string(found->getDiscountPercent()) + "%";
+            foundCustomerBanner = "KẾT QUẢ O(1): [" + found->getUserID() + "] " + found->getFullName() +
+                                  " | Tài khoản: " + found->getUsername() +
+                                  " | Đã đặt: " + std::to_string(found->getBookingCount()) + " lần" +
+                                  " | Ưu đãi: " + std::to_string(found->getDiscountPercent()) + "%";
         } else {
             foundSuccess = false;
-            foundCustomerBanner = "Khong tim thay khach hang nao co So dien thoai: " + ph;
+            foundCustomerBanner = "Không tìm thấy khách hàng nào có Số điện thoại: " + ph;
         }
     }
     ImGui::SameLine();
-    if (UI::SecondaryButton("Lam moi", ImVec2(90.0f, 0.0f))) {
+    if (UI::SecondaryButton("Làm mới", ImVec2(90.0f, 0.0f))) {
         std::memset(phoneSearchBuf, 0, sizeof(phoneSearchBuf));
         foundCustomerBanner.clear();
     }
@@ -52,15 +51,17 @@ void OwnerCustomerScreen::render() {
 
     ImGui::Spacing();
 
-    if (ImGui::BeginTable("CustomersGridTable", 8, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY)) {
-        ImGui::TableSetupColumn("Ma KH", ImGuiTableColumnFlags_WidthFixed, 65.0f);
-        ImGui::TableSetupColumn("Ten Dang Nhap", ImGuiTableColumnFlags_WidthFixed, 120.0f);
-        ImGui::TableSetupColumn("Ho va Ten Khach Hang", ImGuiTableColumnFlags_WidthStretch);
-        ImGui::TableSetupColumn("So Dien Thoai", ImGuiTableColumnFlags_WidthFixed, 120.0f);
-        ImGui::TableSetupColumn("Luot Dat", ImGuiTableColumnFlags_WidthFixed, 75.0f);
-        ImGui::TableSetupColumn("Luot Huy", ImGuiTableColumnFlags_WidthFixed, 75.0f);
-        ImGui::TableSetupColumn("Muc Uu Dai", ImGuiTableColumnFlags_WidthFixed, 95.0f);
-        ImGui::TableSetupColumn("Trang Thai / Thao Tac", ImGuiTableColumnFlags_WidthFixed, 195.0f);
+    if (ctx.custRepo.getAllCustomers().empty()) {
+        UI::RenderEmptyState("Chưa có tài khoản khách hàng nào.");
+    } else if (ImGui::BeginTable("CustomersGridTable", 8, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY)) {
+        ImGui::TableSetupColumn("Mã KH", ImGuiTableColumnFlags_WidthFixed, 65.0f);
+        ImGui::TableSetupColumn("Tên Đăng Nhập", ImGuiTableColumnFlags_WidthFixed, 120.0f);
+        ImGui::TableSetupColumn("Họ và Tên Khách Hàng", ImGuiTableColumnFlags_WidthStretch);
+        ImGui::TableSetupColumn("Số Điện Thoại", ImGuiTableColumnFlags_WidthFixed, 125.0f);
+        ImGui::TableSetupColumn("Lượt Đặt", ImGuiTableColumnFlags_WidthFixed, 80.0f);
+        ImGui::TableSetupColumn("Lượt Hủy", ImGuiTableColumnFlags_WidthFixed, 80.0f);
+        ImGui::TableSetupColumn("Mức Ưu Đãi", ImGuiTableColumnFlags_WidthFixed, 95.0f);
+        ImGui::TableSetupColumn("Trạng Thái / Thao Tác", ImGuiTableColumnFlags_WidthFixed, 195.0f);
         ImGui::TableHeadersRow();
 
         for (const auto& c : ctx.custRepo.getAllCustomers()) {
@@ -69,8 +70,8 @@ void OwnerCustomerScreen::render() {
             ImGui::TableSetColumnIndex(1); ImGui::AlignTextToFramePadding(); ImGui::Text("%s", c.getUsername().c_str());
             ImGui::TableSetColumnIndex(2); ImGui::AlignTextToFramePadding(); ImGui::Text("%s", c.getFullName().c_str());
             ImGui::TableSetColumnIndex(3); ImGui::AlignTextToFramePadding(); ImGui::Text("%s", c.getPhone().c_str());
-            ImGui::TableSetColumnIndex(4); ImGui::AlignTextToFramePadding(); ImGui::Text("%d lan", c.getBookingCount());
-            ImGui::TableSetColumnIndex(5); ImGui::AlignTextToFramePadding(); ImGui::Text("%d lan", c.getCancelCount());
+            ImGui::TableSetColumnIndex(4); ImGui::AlignTextToFramePadding(); ImGui::Text("%d lần", c.getBookingCount());
+            ImGui::TableSetColumnIndex(5); ImGui::AlignTextToFramePadding(); ImGui::Text("%d lần", c.getCancelCount());
             ImGui::TableSetColumnIndex(6); ImGui::AlignTextToFramePadding();
             ImGui::TextColored(Theme::PrimaryOrange, "%d%%", c.getDiscountPercent());
 
@@ -78,11 +79,11 @@ void OwnerCustomerScreen::render() {
             if (c.isBlacklisted()) {
                 UI::StatusBadge("BLACKLIST");
                 ImGui::SameLine(0.0f, 8.0f);
-                std::string unbanLbl = "Go cam##ub_" + c.getUserID();
+                std::string unbanLbl = "Gỡ cấm##ub_" + c.getUserID();
                 if (UI::SuccessButton(unbanLbl.c_str(), ImVec2(80.0f, 28.0f))) {
                     if (ctx.custService.unbanCustomer(c.getUserID())) {
                         ctx.saveAllData();
-                        ctx.notify("Da go Blacklist va reset bo dem huy cho KH " + c.getFullName(), false, glfwGetTime());
+                        ctx.notify("Đã gỡ Blacklist và đặt lại bộ đếm hủy cho KH " + c.getFullName(), false, glfwGetTime());
                     }
                 }
             } else {
@@ -99,20 +100,22 @@ void OwnerCustomerScreen::render() {
 
 void OwnerCustomerScreen::renderBlacklistHistoryModal() {
     if (openBlacklistModal) {
-        ImGui::OpenPopup("Lich Su Ban Ghi Blacklist");
+        ImGui::OpenPopup("Lịch Sử Bản Ghi Blacklist");
         openBlacklistModal = false;
     }
 
-    UI::CenterNextModal(640.0f, 360.0f);
-    if (ImGui::BeginPopupModal("Lich Su Ban Ghi Blacklist", nullptr, ImGuiWindowFlags_NoResize)) {
-        ImGui::TextColored(Theme::TextMuted, "Danh sach cac ban ghi vi pham huy san >= 3 lan luu tai data/blacklist.txt:");
+    UI::CenterNextModal(650.0f, 360.0f);
+    if (ImGui::BeginPopupModal("Lịch Sử Bản Ghi Blacklist", nullptr, ImGuiWindowFlags_NoResize)) {
+        ImGui::TextColored(Theme::TextMuted, "Danh sách các bản ghi vi phạm hủy sân >= 3 lần lưu tại data/blacklist.txt:");
         ImGui::Spacing();
 
-        if (ImGui::BeginTable("ModalBlacklistTable", 4, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY, ImVec2(0, 230.0f))) {
-            ImGui::TableSetupColumn("Ma Ban Ghi", ImGuiTableColumnFlags_WidthFixed, 130.0f);
-            ImGui::TableSetupColumn("Ma KH", ImGuiTableColumnFlags_WidthFixed, 90.0f);
-            ImGui::TableSetupColumn("So Dien Thoai", ImGuiTableColumnFlags_WidthFixed, 130.0f);
-            ImGui::TableSetupColumn("Trang Thai Hieu Luc", ImGuiTableColumnFlags_WidthStretch);
+        if (ctx.custRepo.getAllBlacklists().empty()) {
+            UI::RenderEmptyState("Hiện chưa có khách hàng nào vi phạm nằm trong Blacklist.");
+        } else if (ImGui::BeginTable("ModalBlacklistTable", 4, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY, ImVec2(0, 220.0f))) {
+            ImGui::TableSetupColumn("Mã Bản Ghi", ImGuiTableColumnFlags_WidthFixed, 130.0f);
+            ImGui::TableSetupColumn("Mã KH", ImGuiTableColumnFlags_WidthFixed, 90.0f);
+            ImGui::TableSetupColumn("Số Điện Thoại", ImGuiTableColumnFlags_WidthFixed, 130.0f);
+            ImGui::TableSetupColumn("Trạng Thái Hiệu Lực", ImGuiTableColumnFlags_WidthStretch);
             ImGui::TableHeadersRow();
 
             for (const auto& bl : ctx.custRepo.getAllBlacklists()) {
@@ -128,8 +131,9 @@ void OwnerCustomerScreen::renderBlacklistHistoryModal() {
 
         ImGui::Spacing();
         ImGui::Separator();
-        ImGui::SetCursorPosX(ImGui::GetWindowContentRegionMax().x - 130.0f);
-        if (UI::SecondaryButton("Dong cua so", ImVec2(130.0f, 36.0f))) {
+        ImGui::Spacing();
+        ImGui::SetCursorPosX(ImGui::GetWindowContentRegionMax().x - 135.0f);
+        if (UI::SecondaryButton("Đóng cửa sổ", ImVec2(135.0f, 36.0f))) {
             ImGui::CloseCurrentPopup();
         }
         ImGui::EndPopup();

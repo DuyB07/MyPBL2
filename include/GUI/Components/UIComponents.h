@@ -1,0 +1,32 @@
+#pragma once
+#include <string>
+#include "imgui.h"
+
+namespace UI {
+    // Khung thẻ trắng có tiêu đề & đường gạch chân màu Cam
+    void BeginSectionCard(const char* id, const char* title, float height = 0.0f);
+    void EndSectionCard();
+
+    // Tiêu đề đầu trang + Nút hành động chính căn sát lề phải chuẩn xác
+    bool PageHeader(const char* pageTitle, const char* subtitle = nullptr, const char* rightActionBtnLabel = nullptr);
+
+    // Căn giữa hộp thoại Modal ở chính giữa màn hình trước khi gọi BeginPopupModal
+    void CenterNextModal(float width, float height = 0.0f);
+
+    // Bảng 2 cột ẩn viền giúp căn thẳng hàng Nhãn (trái) và Ô nhập liệu (phải) trong Form
+    bool BeginFormTable(const char* id, float labelColWidth = 150.0f);
+    void FormRowLabel(const char* label);
+    void EndFormTable();
+
+    // Các loại nút bấm theo ngữ nghĩa
+    bool PrimaryButton(const char* label, const ImVec2& size = ImVec2(0, 0));
+    bool SecondaryButton(const char* label, const ImVec2& size = ImVec2(0, 0));
+    bool DangerButton(const char* label, const ImVec2& size = ImVec2(0, 0));
+    bool SuccessButton(const char* label, const ImVec2& size = ImVec2(0, 0));
+
+    // Nhãn trạng thái (Badge) đã tự động căn giữa theo chiều dọc dòng bảng
+    void StatusBadge(const std::string& statusText);
+
+    // Thẻ KPI thống kê
+    void MetricCard(const char* id, const char* title, const std::string& value, const char* caption, bool highlightOrange = false, float width = 0.0f);
+}

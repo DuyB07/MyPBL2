@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <cctype>
+#include "Core/DateTime.h"
 #include "Repository/CustomerRepository.h"
 #include "Repository/FieldRepository.h"
 #include "Repository/BookingRepository.h"
@@ -13,20 +14,17 @@
 
 class AppContext {
 public:
-    // Tầng Repository
     CustomerRepository custRepo;
     FieldRepository fieldRepo;
     BookingRepository bookingRepo;
     TournamentRepository tourRepo;
 
-    // Tầng Service
     CustomerService custService;
     FieldService fieldService;
     BookingService bookingService;
     TournamentService tourService;
     AccountService authService;
 
-    // Trạng thái Toast Notification (Tự động tắt sau vài giây giống Notification.js)
     std::string toastMessage;
     bool toastIsError;
     double toastExpireTime;
@@ -64,8 +62,9 @@ public:
         authService.ensureDefaultOwner();
 
         if (fieldRepo.getAllFields().empty()) {
-            fieldService.createNewField("F01", "San A (Co Nhan Tao)", 5, 200000.0);
-            fieldService.createNewField("F02", "San B (Tieu Chuan)", 7, 350000.0);
+            fieldService.createNewField("F01", "Sân A (Cỏ Nhân Tạo)", 5, 200000.0);
+            fieldService.createNewField("F02", "Sân B (Tiêu Chuẩn)", 7, 350000.0);
+            fieldService.createNewField("F03", "Sân C (Khán Đài)", 7, 250000.0);
             fieldRepo.saveFields("data/fields.txt");
             fieldRepo.saveTimeSlots("data/timeslots.txt");
         } else {
@@ -78,6 +77,45 @@ public:
             }
             if (addedSlots) fieldRepo.saveTimeSlots("data/timeslots.txt");
         }
+
+        // Tự động tạo dữ liệu mẫu ban đầu nếu hệ thống chưa có khách hàng nào
+        if (custRepo.getAllCustomers().empty()) {
+            seedInitialSampleData();
+        }
+    }
+
+    void seedInitialSampleData() {
+        std::string today = DateTime::todayDate();
+
+        // 1. Tạo 3 khách hàng mẫu
+        custService.registerNewCustomer("C01", "khachA", "123", "Nguyễn Văn An", "0905111222");
+        custService.registerNewCustomer("C02", "khachB", "123", "Trần Minh Bảo", "0905333444");
+        custService.registerNewCustomer("C03", "khachC", "123", "Lê Hoàng Nam", "0905666777");
+
+        // 2. Tạo các phiếu đặt sân & thanh toán mẫu
+        bookingService.createBooking("B101", "C01", "F01_S1", today);
+        bookingService.checkoutBooking("B101");
+
+        bookingService.createBooking("B102", "C02", "F01_S9", today);
+        bookingService.checkoutBooking("B102");
+
+        bookingService.createBooking("B103", "C01", "F02_S3", today); // Đang chờ thanh toán (CONFIRMED)
+
+        // 3. Tạo đánh giá mẫu
+        if (custRepo.getAllReviews().empty()) {
+            custRepo.addReview(Review("RV101", "C01", "F01", 5, "Mặt cỏ mới, đèn chiếu sáng rất tốt!", today));
+            custRepo.addReview(Review("RV102", "C02", "F02", 4, "Sân rộng thoáng, có chỗ để xe an toàn.", today));
+        }
+
+        // 4. Tạo 1 giải đấu mẫu đang chờ duyệt (PENDING) để Chủ sân bấm thử Queue
+        if (tourRepo.getAllTournaments().empty()) {
+            tourService.requestTournament("T01", "Cúp Sinh Viên Bách Khoa", "C01", "F01", today, 4);
+            tourService.registerTeam("TM01", "T01", "FC Rồng Vàng", "0911222333");
+            tourService.registerTeam("TM02", "T01", "FC Tia Chớp", "0911444555");
+            tourService.registerTeam("TM03", "T01", "FC Đại Bàng", "0911777888");
+        }
+
+        saveAllData();
     }
 
     void saveAllData() {
@@ -102,7 +140,7 @@ public:
     void notify(const std::string& msg, bool isError, double currentTime) {
         toastMessage = msg;
         toastIsError = isError;
-        toastExpireTime = currentTime + 4.0; // Hiển thị trong 4 giây
+        toastExpireTime = currentTime + 4.0;
     }
 
     static std::string sanitize(const char* raw) {

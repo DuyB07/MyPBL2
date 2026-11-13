@@ -1,13 +1,15 @@
 #include "GUI/Components/UIComponents.h"
 #include "GUI/Theme/OrangeLightTheme.h"
 #include "GUI/Theme/FontManager.h"
+#include <cmath>
+#include <cstdio>
 
 namespace UI {
 
-    void BeginSectionCard(const char* id, const char* title, float height) {
+    void BeginSectionCard(const char* id, const char* title, float height, ImGuiWindowFlags extraFlags) {
         ImGui::PushStyleColor(ImGuiCol_ChildBg, Theme::BgCard);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(20.0f, 18.0f));
-        ImGui::BeginChild(id, ImVec2(0.0f, height), true);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(20.0f, 16.0f));
+        ImGui::BeginChild(id, ImVec2(0.0f, height), true, extraFlags);
 
         if (title && title[0] != '\0') {
             FontManager::pushMedium();
@@ -122,20 +124,72 @@ namespace UI {
     void StatusBadge(const std::string& statusText) {
         ImGui::AlignTextToFramePadding();
         ImVec4 fg = Theme::TextPrimary;
-        if (statusText == "AVAILABLE" || statusText == "COMPLETED" ||
-            statusText == "APPROVED" || statusText == "HOAT DONG" || statusText == "CON TRONG") {
+        std::string display = statusText;
+
+        if (statusText == "AVAILABLE") {
             fg = Theme::SuccessGreen;
-        } else if (statusText == "CANCELED" || statusText == "REJECTED" ||
-                   statusText == "BLACKLIST" || statusText == "MAINTENANCE" || statusText == "DA DAT") {
+            display = "Đang mở cửa";
+        } else if (statusText == "MAINTENANCE") {
             fg = Theme::DangerRed;
-        } else if (statusText == "CONFIRMED" || statusText == "PENDING") {
+            display = "Đang bảo trì";
+        } else if (statusText == "COMPLETED") {
+            fg = Theme::SuccessGreen;
+            display = "Đã hoàn tất";
+        } else if (statusText == "CONFIRMED") {
             fg = Theme::PrimaryOrange;
+            display = "Chờ thanh toán";
+        } else if (statusText == "CANCELED") {
+            fg = Theme::DangerRed;
+            display = "Đã hủy";
+        } else if (statusText == "APPROVED") {
+            fg = Theme::SuccessGreen;
+            display = "Đã duyệt lịch";
+        } else if (statusText == "PENDING") {
+            fg = Theme::PrimaryOrange;
+            display = "Chờ duyệt";
+        } else if (statusText == "REJECTED") {
+            fg = Theme::DangerRed;
+            display = "Đã từ chối";
+        } else if (statusText == "HOAT DONG") {
+            fg = Theme::SuccessGreen;
+            display = "Hoạt động";
+        } else if (statusText == "BLACKLIST") {
+            fg = Theme::DangerRed;
+            display = "Bị khóa";
         }
-        ImGui::TextColored(fg, "[%s]", statusText.c_str());
+
+        ImGui::TextColored(fg, "● %s", display.c_str());
+    }
+
+    std::string FormatMoney(double amount) {
+        long long val = static_cast<long long>(std::llround(amount));
+        bool neg = (val < 0);
+        if (neg) val = -val;
+        std::string raw = std::to_string(val);
+        std::string out;
+        int count = 0;
+        for (int i = static_cast<int>(raw.length()) - 1; i >= 0; --i) {
+            if (count > 0 && count % 3 == 0) out = "," + out;
+            out = raw[i] + out;
+            count++;
+        }
+        if (neg) out = "-" + out;
+        return out + " VNĐ";
+    }
+
+    void RenderEmptyState(const char* message) {
+        ImGui::Spacing();
+        float textW = ImGui::CalcTextSize(message).x;
+        float availW = ImGui::GetContentRegionAvail().x;
+        if (availW > textW) {
+            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + (availW - textW) * 0.5f);
+        }
+        ImGui::TextColored(Theme::TextMuted, "%s", message);
+        ImGui::Spacing();
     }
 
     void MetricCard(const char* id, const char* title, const std::string& value, const char* caption, bool highlightOrange, float width) {
-        ImVec4 bg = highlightOrange ? Theme::PrimaryOrange : Theme::BgCard;
+        ImVec4 bg       = highlightOrange ? Theme::PrimaryOrange : Theme::BgCard;
         ImVec4 titleCol = highlightOrange ? ImVec4(1.0f, 0.92f, 0.85f, 1.0f) : Theme::TextMuted;
         ImVec4 valCol   = highlightOrange ? Theme::TextOnOrange : Theme::PrimaryOrange;
         ImVec4 capCol   = highlightOrange ? ImVec4(1.0f, 0.90f, 0.80f, 1.0f) : Theme::TextMuted;

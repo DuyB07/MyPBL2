@@ -160,51 +160,66 @@ void GuiApplication::run() {
 }
 
 void GuiApplication::renderTopHeaderBar() {
-    ImGui::PushStyleColor(ImGuiCol_ChildBg, Theme::PrimaryOrange);
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(22.0f, 12.0f));
-    ImGui::BeginChild("TopHeaderBar", ImVec2(0.0f, 56.0f), false, ImGuiWindowFlags_NoScrollbar);
+    constexpr float headerH = 56.0f;
 
+    ImGui::PushStyleColor(ImGuiCol_ChildBg, Theme::PrimaryOrange);
+    ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 0.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 0.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(24.0f, 0.0f));
+    ImGui::BeginChild("TopHeaderBar", ImVec2(0.0f, headerH), false, ImGuiWindowFlags_NoScrollbar);
+
+    // 1. Căn giữa theo chiều dọc cho Tiêu đề Cụm sân bên trái
     FontManager::pushMedium();
+    float titleH = ImGui::GetTextLineHeight();
+    ImGui::SetCursorPosY((headerH - titleH) * 0.5f);
     if (Owner* own = ctx.authService.getPrimaryOwner()) {
         ImGui::TextColored(Theme::TextOnOrange, "MFFMS  |  %s", own->getStadiumName().c_str());
     } else {
-        ImGui::TextColored(Theme::TextOnOrange, "MFFMS  |  QUAN LY SAN BONG MINI");
+        ImGui::TextColored(Theme::TextOnOrange, "MFFMS  |  HỆ THỐNG QUẢN LÝ SÂN BÓNG MINI");
     }
     FontManager::popMedium();
 
+    // 2. Căn giữa theo chiều dọc cho Tên người dùng & Nút Đăng xuất bên phải
     User* u = ctx.authService.getCurrentUser();
     if (u) {
-        std::string userBadge = "[" + u->getRole() + "] " + u->getFullName() + " (" + u->getUserID() + ")";
+        std::string roleVN = (u->getRole() == "OWNER") ? "CHỦ SÂN" : "KHÁCH THUÊ";
+        std::string userBadge = "[" + roleVN + "]  " + u->getFullName() + " (" + u->getUserID() + ")";
         float textW = ImGui::CalcTextSize(userBadge.c_str()).x;
-        float rightPos = ImGui::GetWindowWidth() - textW - 140.0f;
-        if (rightPos > 360.0f) ImGui::SameLine(rightPos);
+        float btnW  = 104.0f;
+        float btnH  = 32.0f;
 
-        ImGui::TextColored(Theme::TextOnOrange, "%s", userBadge.c_str());
-        ImGui::SameLine(0.0f, 14.0f);
+        float rightStartX = ImGui::GetWindowWidth() - textW - btnW - 44.0f;
+        if (rightStartX > 360.0f) {
+            ImGui::SameLine(rightStartX);
+            ImGui::SetCursorPosY((headerH - ImGui::GetTextLineHeight()) * 0.5f);
+            ImGui::TextColored(Theme::TextOnOrange, "%s", userBadge.c_str());
 
-        ImGui::PushStyleColor(ImGuiCol_Button, Theme::BgCard);
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, Theme::SoftOrangeTint);
-        ImGui::PushStyleColor(ImGuiCol_Text, Theme::PrimaryOrange);
-        if (ImGui::Button("Dang xuat", ImVec2(96.0f, 30.0f))) {
-            ctx.saveAllData();
-            ctx.authService.logout();
-            ctx.notify("Da luu du lieu va dang xuat.", false, glfwGetTime());
+            ImGui::SameLine(0.0f, 16.0f);
+            ImGui::SetCursorPosY((headerH - btnH) * 0.5f);
+            ImGui::PushStyleColor(ImGuiCol_Button, Theme::BgCard);
+            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, Theme::SoftOrangeTint);
+            ImGui::PushStyleColor(ImGuiCol_Text, Theme::PrimaryOrange);
+            if (ImGui::Button("Đăng xuất", ImVec2(btnW, btnH))) {
+                ctx.saveAllData();
+                ctx.authService.logout();
+                ctx.notify("Đã lưu dữ liệu và đăng xuất thành công.", false, glfwGetTime());
+            }
+            ImGui::PopStyleColor(3);
         }
-        ImGui::PopStyleColor(3);
     }
 
     ImGui::EndChild();
-    ImGui::PopStyleVar();
+    ImGui::PopStyleVar(3);
     ImGui::PopStyleColor();
 }
 
 void GuiApplication::renderSidebarAndWorkspace(IScreen** screens, int count, int& activeIdx) {
-    // 1. Thanh điều hướng dọc bên trái (Left Sidebar nền trắng)
     ImGui::PushStyleColor(ImGuiCol_ChildBg, Theme::BgSidebar);
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(14.0f, 18.0f));
-    ImGui::BeginChild("LeftSidebar", ImVec2(250.0f, 0.0f), true);
+    ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 0.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(14.0f, 20.0f));
+    ImGui::BeginChild("LeftSidebar", ImVec2(255.0f, 0.0f), true);
 
-    ImGui::TextColored(Theme::TextMuted, "DANH MUC QUAN LY");
+    ImGui::TextColored(Theme::TextMuted, "DANH MỤC QUẢN LÝ");
     ImGui::Spacing();
     ImGui::Separator();
     ImGui::Spacing();
@@ -231,14 +246,13 @@ void GuiApplication::renderSidebarAndWorkspace(IScreen** screens, int count, int
     ImGui::PopStyleVar();
 
     ImGui::EndChild();
-    ImGui::PopStyleVar();
+    ImGui::PopStyleVar(2);
     ImGui::PopStyleColor();
 
     ImGui::SameLine(0.0f, 0.0f);
 
-    // 2. Vùng làm việc chính bên phải (Main Workspace)
     ImGui::PushStyleColor(ImGuiCol_ChildBg, Theme::BgWorkspace);
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(24.0f, 22.0f));
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(24.0f, 20.0f));
     ImGui::BeginChild("MainContentWorkspace", ImVec2(0.0f, 0.0f), false);
 
     if (activeIdx >= 0 && activeIdx < count && screens[activeIdx]) {

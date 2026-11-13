@@ -15,13 +15,13 @@ void OwnerTournamentScreen::render() {
     if (ctx.tourRepo.getAllTournaments().empty()) {
         UI::RenderEmptyState("Chưa có giải đấu nào được đăng ký.");
     } else if (ImGui::BeginTable("OwnerTourTable", 7, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY)) {
-        ImGui::TableSetupColumn("Mã Giải", ImGuiTableColumnFlags_WidthFixed, 70.0f);
-        ImGui::TableSetupColumn("Tên Giải Đấu", ImGuiTableColumnFlags_WidthStretch);
-        ImGui::TableSetupColumn("Sân & Ngày", ImGuiTableColumnFlags_WidthFixed, 145.0f);
-        ImGui::TableSetupColumn("Số Đội", ImGuiTableColumnFlags_WidthFixed, 75.0f);
-        ImGui::TableSetupColumn("Kết Quả Chung Cuộc", ImGuiTableColumnFlags_WidthStretch);
-        ImGui::TableSetupColumn("Trạng Thái", ImGuiTableColumnFlags_WidthFixed, 120.0f);
-        ImGui::TableSetupColumn("Điều Hành Giải", ImGuiTableColumnFlags_WidthFixed, 250.0f);
+        ImGui::TableSetupColumn("Mã Giải", ImGuiTableColumnFlags_WidthFixed, 68.0f);
+        ImGui::TableSetupColumn("Tên Giải Đấu", ImGuiTableColumnFlags_WidthStretch, 1.35f);
+        ImGui::TableSetupColumn("Sân & Ngày", ImGuiTableColumnFlags_WidthFixed, 138.0f);
+        ImGui::TableSetupColumn("Số Đội", ImGuiTableColumnFlags_WidthFixed, 72.0f);
+        ImGui::TableSetupColumn("Kết Quả Chung Cuộc", ImGuiTableColumnFlags_WidthStretch, 1.0f);
+        ImGui::TableSetupColumn("Trạng Thái", ImGuiTableColumnFlags_WidthFixed, 125.0f);
+        ImGui::TableSetupColumn("Điều Hành Giải", ImGuiTableColumnFlags_WidthFixed, 245.0f);
         ImGui::TableHeadersRow();
 
         for (const auto& t : ctx.tourRepo.getAllTournaments()) {
@@ -50,7 +50,7 @@ void OwnerTournamentScreen::render() {
 
             ImGui::TableSetColumnIndex(6);
             std::string viewBtn = "Lịch & Tỉ số##v_" + t.getTournamentId();
-            if (UI::SecondaryButton(viewBtn.c_str(), ImVec2(98.0f, 28.0f))) {
+            if (UI::SecondaryButton(viewBtn.c_str(), ImVec2(96.0f, 28.0f))) {
                 selectedTourId = t.getTournamentId();
                 selectedMatchId.clear();
                 openMatchesModal = true;
@@ -59,7 +59,7 @@ void OwnerTournamentScreen::render() {
             if (t.getStatus() == "PENDING") {
                 ImGui::SameLine(0.0f, 5.0f);
                 std::string appBtn = "Duyệt##a_" + t.getTournamentId();
-                if (UI::PrimaryButton(appBtn.c_str(), ImVec2(68.0f, 28.0f))) {
+                if (UI::PrimaryButton(appBtn.c_str(), ImVec2(66.0f, 28.0f))) {
                     if (ctx.tourService.approveAndScheduleTournament(t.getTournamentId())) {
                         ctx.saveAllData();
                         selectedTourId = t.getTournamentId();
@@ -93,8 +93,9 @@ void OwnerTournamentScreen::renderMatchesAndScoreModal() {
         openMatchesModal = false;
     }
 
-    UI::CenterNextModal(760.0f, 470.0f);
-    if (ImGui::BeginPopupModal("Lịch Thi Đấu & Cập Nhật Tỉ Số", nullptr, ImGuiWindowFlags_NoResize)) {
+    UI::CenterNextModal(820.0f, 480.0f);
+    if (ImGui::BeginPopupModal("Lịch Thi Đấu & Cập Nhật Tỉ Số", nullptr,
+                               ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar)) {
         Tournament* t = ctx.tourRepo.findTournamentById(selectedTourId);
         if (!t) {
             ImGui::CloseCurrentPopup();
@@ -108,15 +109,29 @@ void OwnerTournamentScreen::renderMatchesAndScoreModal() {
         ImGui::Spacing();
 
         LinkedList<TournamentMatch> matches = ctx.tourRepo.getMatchesByTournament(selectedTourId);
+        LinkedList<Team> tourTeams = ctx.tourRepo.getTeamsByTournament(selectedTourId);
+
+        auto resolveTeamLabel = [&tourTeams](const std::string& tmId) -> std::string {
+            for (const auto& tm : tourTeams) {
+                if (tm.getTeamId() == tmId) {
+                    return tmId + " (" + tm.getTeamName() + ")";
+                }
+            }
+            return tmId;
+        };
+
         if (matches.empty()) {
+            ImGui::BeginChild("EmptyMatchesBox", ImVec2(0, 250.0f), false);
+            ImGui::SetCursorPosY(95.0f);
             UI::RenderEmptyState("Giải đấu này đang chờ duyệt (PENDING), chưa sinh lịch thi đấu.");
-        } else if (ImGui::BeginTable("ModalMatchesTable", 6, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY, ImVec2(0, 240.0f))) {
-            ImGui::TableSetupColumn("Mã Trận", ImGuiTableColumnFlags_WidthFixed, 85.0f);
-            ImGui::TableSetupColumn("Khung Giờ", ImGuiTableColumnFlags_WidthFixed, 105.0f);
+            ImGui::EndChild();
+        } else if (ImGui::BeginTable("ModalMatchesTable", 6, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY, ImVec2(0, 250.0f))) {
+            ImGui::TableSetupColumn("Mã Trận", ImGuiTableColumnFlags_WidthFixed, 82.0f);
+            ImGui::TableSetupColumn("Khung Giờ", ImGuiTableColumnFlags_WidthFixed, 92.0f);
             ImGui::TableSetupColumn("Cặp Thi Đấu", ImGuiTableColumnFlags_WidthStretch);
-            ImGui::TableSetupColumn("Tỉ Số", ImGuiTableColumnFlags_WidthFixed, 85.0f);
-            ImGui::TableSetupColumn("Trạng Thái", ImGuiTableColumnFlags_WidthFixed, 120.0f);
-            ImGui::TableSetupColumn("Thao Tác", ImGuiTableColumnFlags_WidthFixed, 110.0f);
+            ImGui::TableSetupColumn("Tỉ Số", ImGuiTableColumnFlags_WidthFixed, 78.0f);
+            ImGui::TableSetupColumn("Trạng Thái", ImGuiTableColumnFlags_WidthFixed, 125.0f);
+            ImGui::TableSetupColumn("Thao Tác", ImGuiTableColumnFlags_WidthFixed, 108.0f);
             ImGui::TableHeadersRow();
 
             for (const auto& m : matches) {
@@ -124,11 +139,13 @@ void OwnerTournamentScreen::renderMatchesAndScoreModal() {
                 ImGui::TableSetColumnIndex(0); ImGui::AlignTextToFramePadding(); ImGui::Text("%s", m.getMatchId().c_str());
                 ImGui::TableSetColumnIndex(1); ImGui::AlignTextToFramePadding(); ImGui::Text("%s", m.getSlotId().c_str());
                 ImGui::TableSetColumnIndex(2); ImGui::AlignTextToFramePadding();
-                ImGui::Text("%s   vs   %s", m.getTeamAId().c_str(), m.getTeamBId().c_str());
+                ImGui::Text("%s  vs  %s",
+                            resolveTeamLabel(m.getTeamAId()).c_str(),
+                            resolveTeamLabel(m.getTeamBId()).c_str());
                 ImGui::TableSetColumnIndex(3); ImGui::AlignTextToFramePadding();
-                ImGui::TextColored(Theme::PrimaryOrange, "%d  -  %d", m.getScoreA(), m.getScoreB());
+                ImGui::TextColored(Theme::PrimaryOrange, "%d - %d", m.getScoreA(), m.getScoreB());
                 ImGui::TableSetColumnIndex(4);
-                UI::StatusBadge(m.isCompleted() ? "COMPLETED" : "PENDING");
+                UI::StatusBadge(m.isCompleted() ? "COMPLETED" : "UNPLAYED");
                 ImGui::TableSetColumnIndex(5);
                 std::string btn = "Nhập tỉ số##ms_" + m.getMatchId();
                 if (UI::SecondaryButton(btn.c_str(), ImVec2(96.0f, 28.0f))) {
@@ -140,17 +157,18 @@ void OwnerTournamentScreen::renderMatchesAndScoreModal() {
             ImGui::EndTable();
         }
 
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Spacing();
+
         if (!selectedMatchId.empty()) {
-            ImGui::Spacing();
-            ImGui::Separator();
-            ImGui::Spacing();
             ImGui::AlignTextToFramePadding();
             ImGui::TextColored(Theme::PrimaryOrange, "Cập nhật tỉ số trận [%s]:", selectedMatchId.c_str());
             ImGui::SameLine();
-            ImGui::SetNextItemWidth(100.0f);
+            ImGui::SetNextItemWidth(95.0f);
             ImGui::InputInt("Đội A", &scoreA);
             ImGui::SameLine();
-            ImGui::SetNextItemWidth(100.0f);
+            ImGui::SetNextItemWidth(95.0f);
             ImGui::InputInt("Đội B", &scoreB);
             ImGui::SameLine();
             if (UI::PrimaryButton("Lưu kết quả", ImVec2(120.0f, 0.0f))) {
@@ -161,6 +179,9 @@ void OwnerTournamentScreen::renderMatchesAndScoreModal() {
                     ctx.notify("Tỉ số phải >= 0!", true, glfwGetTime());
                 }
             }
+        } else {
+            ImGui::AlignTextToFramePadding();
+            ImGui::TextColored(Theme::TextMuted, "Gợi ý: Bấm nút [Nhập tỉ số] ở một trận đấu phía trên để cập nhật kết quả.");
         }
 
         ImGui::Spacing();

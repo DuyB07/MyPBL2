@@ -13,12 +13,16 @@ void OwnerBookingScreen::render() {
     UI::PageHeader("QUẢN LÝ PHIẾU ĐẶT SÂN & HÓA ĐƠN",
                    "Xác nhận thanh toán (áp dụng ưu đãi thành viên), hủy phiếu và đối soát doanh thu");
 
-    UI::BeginSectionCard("BookingListCard", "DANH SÁCH PHIẾU ĐẶT SÂN (data/bookings.txt)", 350.0f);
+    float availH = ImGui::GetContentRegionAvail().y;
+    float topCardH = availH * 0.52f;
+    if (topCardH < 260.0f) topCardH = 260.0f;
+
+    UI::BeginSectionCard("BookingListCard", "DANH SÁCH PHIẾU ĐẶT SÂN (data/bookings.txt)", topCardH);
 
     ImGui::AlignTextToFramePadding();
     ImGui::Text("Trạng thái:");
     ImGui::SameLine();
-    ImGui::SetNextItemWidth(195.0f);
+    ImGui::SetNextItemWidth(235.0f); // Đủ rộng để hiển thị trọn chữ "Chờ thanh toán (CONFIRMED)"
     const char* statusItems[] = { "Tất cả trạng thái", "Chờ thanh toán (CONFIRMED)", "Đã hoàn tất (COMPLETED)", "Đã hủy (CANCELED)" };
     ImGui::Combo("##bk_status_filter", &statusFilterIdx, statusItems, IM_ARRAYSIZE(statusItems));
 
@@ -41,14 +45,26 @@ void OwnerBookingScreen::render() {
                              : (statusFilterIdx == 2) ? "COMPLETED"
                              : (statusFilterIdx == 3) ? "CANCELED" : "";
 
-    if (ctx.bookingRepo.getAllBookings().empty()) {
-        UI::RenderEmptyState("Chưa có phiếu đặt sân nào trong hệ thống.");
+    // Đếm số bản ghi khớp với bộ lọc trước khi vẽ bảng
+    int matchCount = 0;
+    for (const auto& b : ctx.bookingRepo.getAllBookings()) {
+        if (targetStatus[0] != '\0' && b.getStatus() != targetStatus) continue;
+        if (!keyword.empty() &&
+            AppContext::toUpper(b.getBookingId()).find(keyword) == std::string::npos &&
+            AppContext::toUpper(b.getCustomerId()).find(keyword) == std::string::npos) {
+            continue;
+        }
+        matchCount++;
+    }
+
+    if (matchCount == 0) {
+        UI::RenderEmptyState("Không có phiếu đặt sân nào khớp với bộ lọc hiện tại.");
     } else if (ImGui::BeginTable("OwnerBookingsTable", 6, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY)) {
         ImGui::TableSetupColumn("Mã Phiếu", ImGuiTableColumnFlags_WidthFixed, 85.0f);
         ImGui::TableSetupColumn("Khách Hàng", ImGuiTableColumnFlags_WidthFixed, 175.0f);
         ImGui::TableSetupColumn("Ngày Đặt Sân", ImGuiTableColumnFlags_WidthFixed, 110.0f);
         ImGui::TableSetupColumn("Chi Tiết Khung Giờ & Đơn Giá", ImGuiTableColumnFlags_WidthStretch);
-        ImGui::TableSetupColumn("Trạng Thái", ImGuiTableColumnFlags_WidthFixed, 130.0f);
+        ImGui::TableSetupColumn("Trạng Thái", ImGuiTableColumnFlags_WidthFixed, 135.0f);
         ImGui::TableSetupColumn("Thao Tác Nghiệp Vụ", ImGuiTableColumnFlags_WidthFixed, 195.0f);
         ImGui::TableHeadersRow();
 

@@ -198,9 +198,9 @@ void OwnerFieldScreen::renderFieldDetailAndScheduleModal() {
         openDetailModal = false;
     }
 
-    // Tăng chiều rộng Popup lên 880px và chiều cao 525px để 10 ô khung giờ thoáng đãng tuyệt đối
-    UI::CenterNextModal(880.0f, 525.0f);
-    if (ImGui::BeginPopupModal("Chi Tiết Sân & Sơ Đồ Khung Giờ", nullptr, ImGuiWindowFlags_NoResize)) {
+    UI::CenterNextModal(880.0f, 540.0f);
+    if (ImGui::BeginPopupModal("Chi Tiết Sân & Sơ Đồ Khung Giờ", nullptr,
+                               ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar)) {
         Field* f = ctx.fieldRepo.findFieldById(selectedFieldId);
         if (!f) {
             ImGui::CloseCurrentPopup();
@@ -235,7 +235,6 @@ void OwnerFieldScreen::renderFieldDetailAndScheduleModal() {
         ImGui::TextColored(Theme::PrimaryOrange, "SƠ ĐỒ 10 KHUNG GIỜ TRONG NGÀY %s:", dateStr.c_str());
         ImGui::Spacing();
 
-        // Đặt WindowPadding nhỏ gọn (10, 8) cho các thẻ con để hiển thị trọn vẹn 4 dòng không bao giờ bị cắt
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(10.0f, 8.0f));
         ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(6.0f, 4.0f));
 
@@ -251,27 +250,30 @@ void OwnerFieldScreen::renderFieldDetailAndScheduleModal() {
 
                 ImVec4 bg = booked ? Theme::SoftRedBg : (match ? Theme::SoftAmberBg : Theme::SoftGreenBg);
                 ImVec4 fg = booked ? Theme::DangerRed : (match ? Theme::WarningAmber : Theme::SuccessGreen);
-                const char* st = booked ? "● ĐÃ CÓ KHÁCH" : (match ? "● LỊCH GIẢI ĐẤU" : "● CÒN TRỐNG");
+                const char* st = booked ? "ĐÃ CÓ KHÁCH" : (match ? "LỊCH GIẢI ĐẤU" : "CÒN TRỐNG");
 
                 ImGui::PushStyleColor(ImGuiCol_ChildBg, bg);
                 char cid[32];
                 std::snprintf(cid, sizeof(cid), "mslot_%d", idx);
-                ImGui::BeginChild(cid, ImVec2(0.0f, 98.0f), true, ImGuiWindowFlags_NoScrollbar);
+                ImGui::BeginChild(cid, ImVec2(0.0f, 96.0f), true, ImGuiWindowFlags_NoScrollbar);
 
-                // Dòng 1: Mã ca + Nhãn giờ vàng
                 ImGui::TextColored(Theme::PrimaryOrange, "%s", s.getSlotId().c_str());
                 if (s.getPriceMultiplier() > 1.0) {
                     ImGui::SameLine();
                     ImGui::TextColored(Theme::WarningAmber, "(Giờ vàng)");
                 }
 
-                // Dòng 2: Khung giờ đầy đủ
                 ImGui::TextColored(Theme::TextPrimary, "Giờ: %s - %s", s.getStartTime().c_str(), s.getEndTime().c_str());
-
-                // Dòng 3: Giá tiền
                 ImGui::TextColored(Theme::TextMuted, "%s", UI::FormatMoney(p).c_str());
 
-                // Dòng 4: Trạng thái
+                // Vẽ chấm tròn trạng thái thay vì ký tự Unicode gây lỗi '?'
+                ImVec2 dotPos = ImGui::GetCursorScreenPos();
+                float lineH = ImGui::GetTextLineHeight();
+                ImGui::GetWindowDrawList()->AddCircleFilled(
+                    ImVec2(dotPos.x + 5.0f, dotPos.y + lineH * 0.5f),
+                    4.0f, ImGui::ColorConvertFloat4ToU32(fg));
+                ImGui::Dummy(ImVec2(12.0f, lineH));
+                ImGui::SameLine(0.0f, 3.0f);
                 ImGui::TextColored(fg, "%s", st);
 
                 ImGui::EndChild();

@@ -147,6 +147,9 @@ namespace UI {
         } else if (statusText == "PENDING") {
             fg = Theme::PrimaryOrange;
             display = "Chờ duyệt";
+        } else if (statusText == "UNPLAYED") {
+            fg = Theme::PrimaryOrange;
+            display = "Chưa thi đấu";
         } else if (statusText == "REJECTED") {
             fg = Theme::DangerRed;
             display = "Đã từ chối";
@@ -158,7 +161,15 @@ namespace UI {
             display = "Bị khóa";
         }
 
-        ImGui::TextColored(fg, "● %s", display.c_str());
+        ImVec2 pos = ImGui::GetCursorScreenPos();
+        float lineH = ImGui::GetFrameHeight();
+        ImVec2 center(pos.x + 6.0f, pos.y + lineH * 0.5f);
+        ImGui::GetWindowDrawList()->AddCircleFilled(center, 4.5f, ImGui::ColorConvertFloat4ToU32(fg));
+
+        ImGui::Dummy(ImVec2(14.0f, lineH));
+        ImGui::SameLine(0.0f, 4.0f);
+        ImGui::AlignTextToFramePadding();
+        ImGui::TextColored(fg, "%s", display.c_str());
     }
 
     std::string FormatMoney(double amount) {

@@ -105,13 +105,16 @@ void OwnerCustomerScreen::renderBlacklistHistoryModal() {
     }
 
     UI::CenterNextModal(650.0f, 360.0f);
-    if (ImGui::BeginPopupModal("Lịch Sử Bản Ghi Blacklist", nullptr, ImGuiWindowFlags_NoResize)) {
+    if (ImGui::BeginPopupModal("Lịch Sử Bản Ghi Blacklist", nullptr,
+                               ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar)) {
         ImGui::TextColored(Theme::TextMuted, "Danh sách các bản ghi vi phạm hủy sân >= 3 lần lưu tại data/blacklist.txt:");
         ImGui::Spacing();
 
+        ImGui::BeginChild("BlacklistModalBody", ImVec2(0.0f, 220.0f), false);
         if (ctx.custRepo.getAllBlacklists().empty()) {
+            ImGui::SetCursorPosY(85.0f);
             UI::RenderEmptyState("Hiện chưa có khách hàng nào vi phạm nằm trong Blacklist.");
-        } else if (ImGui::BeginTable("ModalBlacklistTable", 4, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY, ImVec2(0, 220.0f))) {
+        } else if (ImGui::BeginTable("ModalBlacklistTable", 4, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY)) {
             ImGui::TableSetupColumn("Mã Bản Ghi", ImGuiTableColumnFlags_WidthFixed, 130.0f);
             ImGui::TableSetupColumn("Mã KH", ImGuiTableColumnFlags_WidthFixed, 90.0f);
             ImGui::TableSetupColumn("Số Điện Thoại", ImGuiTableColumnFlags_WidthFixed, 130.0f);
@@ -128,6 +131,7 @@ void OwnerCustomerScreen::renderBlacklistHistoryModal() {
             }
             ImGui::EndTable();
         }
+        ImGui::EndChild();
 
         ImGui::Spacing();
         ImGui::Separator();
